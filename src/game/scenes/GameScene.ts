@@ -27,6 +27,7 @@ export class GameScene extends Phaser.Scene {
     this.inputManager = new InputManager(this, {
       onMoveLeft: () => this.laneController.moveLeft(),
       onMoveRight: () => this.laneController.moveRight(),
+      onJump: () => this.player.jump(),
     })
 
     EventBus.emit('game-ready')

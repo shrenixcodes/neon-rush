@@ -3,11 +3,13 @@ import Phaser from 'phaser'
 export interface InputHandlers {
   onMoveLeft: () => void
   onMoveRight: () => void
+  onJump: () => void
 }
 
 const KEY_BINDINGS: Record<keyof InputHandlers, string[]> = {
   onMoveLeft: ['LEFT', 'A'],
   onMoveRight: ['RIGHT', 'D'],
+  onJump: ['SPACE', 'UP', 'W'],
 }
 
 /**

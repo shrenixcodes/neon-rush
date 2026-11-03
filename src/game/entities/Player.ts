@@ -1,6 +1,13 @@
 import Phaser from 'phaser'
 import type { CharacterPalette } from '@/game/data/characters'
-import { PLAYER_HEIGHT, PLAYER_ROW_Y, PLAYER_WIDTH } from '@/game/config/gameConfig'
+import {
+  GRAVITY_Y,
+  JUMP_FORWARD_LEAN,
+  JUMP_VELOCITY,
+  PLAYER_HEIGHT,
+  PLAYER_ROW_Y,
+  PLAYER_WIDTH,
+} from '@/game/config/gameConfig'
 
 export type PlayerState = 'running' | 'jumping' | 'sliding' | 'colliding' | 'dead'
 
@@ -30,9 +37,11 @@ export class Player extends Phaser.GameObjects.Container {
   private glow: Phaser.GameObjects.Arc
 
   private runClock = 0
+  private baselineY: number
 
   constructor(scene: Phaser.Scene, x: number, palette: CharacterPalette) {
     super(scene, x, PLAYER_ROW_Y)
+    this.baselineY = PLAYER_ROW_Y
 
     this.glow = scene.add.circle(
       0,
@@ -72,22 +81,30 @@ export class Player extends Phaser.GameObjects.Container {
     this.body.setSize(PLAYER_WIDTH, PLAYER_HEIGHT)
     this.body.setOffset(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT)
     this.body.setCollideWorldBounds(false)
+    // Gravity is only switched on for the duration of a jump (see jump()/updateJumpPhysics()).
+    // Leaving it on permanently would slowly drag the body below the running baseline.
     this.body.setGravityY(0)
   }
 
   update(_time: number, delta: number): void {
-    this.runClock += delta
-    this.updateRunCycle()
+    if (this.state === 'running' || this.state === 'jumping') {
+      this.runClock += delta
+    }
 
-    // Lane-switch tweens (see LaneController) move this container's x directly rather
-    // than through body velocity. Arcade physics otherwise re-derives this container's
-    // transform from the body's own position every step, which would silently
-    // overwrite the tween - pushing the new transform into the body each frame keeps
-    // the two in sync.
+    this.updateRunCycle()
+    this.updateJumpPhysics()
+
+    // Lane-switch tweens (see LaneController) and the landing-position snap below both
+    // move this container's x/y directly rather than through body velocity. Arcade
+    // physics otherwise re-derives this container's transform from the body's own
+    // position every step, which would silently overwrite those changes - pushing the
+    // new transform into the body each frame keeps the two in sync.
     this.body.updateFromGameObject()
   }
 
   private updateRunCycle(): void {
+    if (this.state === 'sliding' || this.state === 'dead') return
+
     const phase = (this.runClock % RUN_CYCLE_MS) / RUN_CYCLE_MS
     const swing = Math.sin(phase * Math.PI * 2)
     this.legLeft.rotation = Phaser.Math.DegToRad(swing * LEG_SWING_DEG)
@@ -95,9 +112,39 @@ export class Player extends Phaser.GameObjects.Container {
     this.armRight.rotation = Phaser.Math.DegToRad(swing * ARM_SWING_DEG)
     this.armLeft.rotation = Phaser.Math.DegToRad(-swing * ARM_SWING_DEG)
 
-    const bob = Math.abs(swing) * 4
+    const bob = this.state === 'running' ? Math.abs(swing) * 4 : 0
     this.torso.y = -20 - bob
     this.head.y = -62 - bob
     this.visor.y = -64 - bob
+  }
+
+  private updateJumpPhysics(): void {
+    if (this.state !== 'jumping') return
+
+    this.rotation = Phaser.Math.Clamp(
+      this.body.velocity.y * -0.00003,
+      -JUMP_FORWARD_LEAN,
+      JUMP_FORWARD_LEAN,
+    )
+
+    if (this.y >= this.baselineY && this.body.velocity.y >= 0) {
+      this.y = this.baselineY
+      this.body.setVelocityY(0)
+      this.body.setGravityY(0)
+      this.rotation = 0
+      this.state = 'running'
+    }
+  }
+
+  jump(): boolean {
+    if (this.state !== 'running') return false
+    this.state = 'jumping'
+    this.body.setGravityY(GRAVITY_Y)
+    this.body.setVelocityY(JUMP_VELOCITY)
+    return true
+  }
+
+  isAirborne(): boolean {
+    return this.state === 'jumping'
   }
 }
