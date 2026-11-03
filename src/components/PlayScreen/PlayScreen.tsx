@@ -3,14 +3,26 @@ import { GameHUD } from '@/components/GameHUD/GameHUD'
 import { PauseScreen } from '@/components/PauseScreen/PauseScreen'
 import { GameOverScreen } from '@/components/GameOverScreen/GameOverScreen'
 import { useGameEvents } from '@/hooks/useGameEvents'
+import type { GameMode } from '@/game/types/events'
+import type { GhostEvent } from '@/game/types/replay'
 
 interface PlayScreenProps {
   highScore: number
   characterId: string
+  mode: GameMode
+  dailyBest: number
+  ghostEvents: GhostEvent[] | null
   onExit: () => void
 }
 
-export function PlayScreen({ highScore, characterId, onExit }: PlayScreenProps) {
+export function PlayScreen({
+  highScore,
+  characterId,
+  mode,
+  dailyBest,
+  ghostEvents,
+  onExit,
+}: PlayScreenProps) {
   const {
     score,
     distance,
@@ -25,7 +37,13 @@ export function PlayScreen({ highScore, characterId, onExit }: PlayScreenProps) 
 
   return (
     <div className="relative min-h-svh bg-ink-950">
-      <GameCanvas highScore={highScore} characterId={characterId} />
+      <GameCanvas
+        highScore={highScore}
+        characterId={characterId}
+        mode={mode}
+        dailyBest={dailyBest}
+        ghostEvents={ghostEvents}
+      />
       <GameHUD
         score={score}
         distance={distance}

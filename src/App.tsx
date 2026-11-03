@@ -7,36 +7,49 @@ import { Settings } from '@/components/Settings/Settings'
 import { PlayScreen } from '@/components/PlayScreen/PlayScreen'
 import { EventBus } from '@/game/EventBus'
 import { CHARACTERS } from '@/game/data/characters'
+import { getDailyChallengeKey } from '@/game/data/dailyChallenge'
 import { useSaveData } from '@/hooks/useSaveData'
 import { usePersistentState } from '@/hooks/usePersistentState'
 import { DEFAULT_SETTINGS } from '@/types/settings'
-import type { GameOverPayload } from '@/game/types/events'
+import type { GameMode, GameOverPayload } from '@/game/types/events'
 import type { Screen } from '@/types/screen'
 
 const fadeTransition = { duration: 0.25, ease: 'easeInOut' as const }
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('main-menu')
+  const [playMode, setPlayMode] = useState<GameMode>('endless')
   const [settings, setSettings] = usePersistentState('neon-rush-settings', DEFAULT_SETTINGS)
   const [saveData, setSaveData] = useSaveData()
 
+  const todayKey = getDailyChallengeKey()
+  const dailyBest = saveData.dailyBest[todayKey] ?? 0
+
   // Every completed run (win or lose, it always ends in 'game-over') banks its coins
-  // into the persistent total and raises the high score if beaten. This is the one
-  // place progression actually gets written, independent of whichever screen is
-  // mounted at the time.
+  // into the persistent total, and raises either the endless high score or today's
+  // daily-challenge best depending on which mode it was. This is the one place
+  // progression actually gets written, independent of whichever screen is mounted.
   useEffect(() => {
     const onGameOver = (payload: GameOverPayload) => {
       setSaveData((prev) => ({
         ...prev,
         totalCoins: prev.totalCoins + payload.coins,
-        highScore: Math.max(prev.highScore, payload.score),
+        highScore:
+          payload.mode === 'endless' ? Math.max(prev.highScore, payload.score) : prev.highScore,
+        dailyBest:
+          payload.mode === 'daily'
+            ? {
+                ...prev.dailyBest,
+                [todayKey]: Math.max(prev.dailyBest[todayKey] ?? 0, payload.score),
+              }
+            : prev.dailyBest,
       }))
     }
     EventBus.on('game-over', onGameOver)
     return () => {
       EventBus.off('game-over', onGameOver)
     }
-  }, [setSaveData])
+  }, [setSaveData, todayKey])
 
   const handleUnlock = (id: string) => {
     const character = CHARACTERS.find((c) => c.id === id)
@@ -58,6 +71,11 @@ export default function App() {
     setSaveData((prev) => ({ ...prev, selectedCharacterId: id }))
   }
 
+  const startRun = (mode: GameMode) => {
+    setPlayMode(mode)
+    setScreen('playing')
+  }
+
   return (
     <>
       <motion.div
@@ -70,8 +88,10 @@ export default function App() {
           <MainMenu
             highScore={saveData.highScore}
             totalCoins={saveData.totalCoins}
+            dailyBest={dailyBest}
             onNavigate={setScreen}
-            onPlay={() => setScreen('playing')}
+            onPlay={() => startRun('endless')}
+            onPlayDaily={() => startRun('daily')}
           />
         )}
         {screen === 'character-select' && (
@@ -96,6 +116,9 @@ export default function App() {
           <PlayScreen
             highScore={saveData.highScore}
             characterId={saveData.selectedCharacterId}
+            mode={playMode}
+            dailyBest={dailyBest}
+            ghostEvents={saveData.bestGhostRun}
             onExit={() => setScreen('main-menu')}
           />
         )}

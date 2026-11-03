@@ -10,8 +10,10 @@ import { ScoreManager } from '@/game/systems/ScoreManager'
 import { ComboManager } from '@/game/systems/ComboManager'
 import { NearMissSystem } from '@/game/systems/NearMissSystem'
 import { getDifficultyAt } from '@/game/systems/DifficultyManager'
+import { createDailyChallengeRng } from '@/game/data/dailyChallenge'
 import { CHARACTERS, DEFAULT_CHARACTER_ID } from '@/game/data/characters'
 import { GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
+import type { GameMode } from '@/game/types/events'
 
 export class GameScene extends Phaser.Scene {
   private player!: Player
@@ -28,6 +30,8 @@ export class GameScene extends Phaser.Scene {
   private scrollSpeed = 0
   private isGameOver = false
   private highScoreAtStart = 0
+  private dailyBestAtStart = 0
+  private mode: GameMode = 'endless'
 
   constructor() {
     super('Game')
@@ -38,6 +42,8 @@ export class GameScene extends Phaser.Scene {
     this.distance = 0
     this.scrollSpeed = getDifficultyAt(0).scrollSpeed
     this.highScoreAtStart = (this.registry.get('highScore') as number | undefined) ?? 0
+    this.dailyBestAtStart = (this.registry.get('dailyBest') as number | undefined) ?? 0
+    this.mode = (this.registry.get('mode') as GameMode | undefined) ?? 'endless'
 
     this.road = this.add.tileSprite(
       GAME_WIDTH / 2,
@@ -52,8 +58,14 @@ export class GameScene extends Phaser.Scene {
     const character = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0]
     this.player = new Player(this, LANE_X[1], character.palette)
     this.laneController = new LaneController(this, this.player)
-    this.obstacleSpawner = new ObstacleSpawner(this)
-    this.coinSpawner = new CoinSpawner(this)
+
+    // A daily challenge run draws its obstacle/coin sequence from a seed derived from
+    // today's date, so every player sees the same layout; an endless run stays on
+    // Math.random (ObstacleSpawner/CoinSpawner's default) for genuine variety.
+    const rng = this.mode === 'daily' ? createDailyChallengeRng() : undefined
+    this.obstacleSpawner = new ObstacleSpawner(this, rng)
+    this.coinSpawner = new CoinSpawner(this, rng)
+
     this.collisionSystem = new CollisionSystem(this)
     this.scoreManager = new ScoreManager()
     this.comboManager = new ComboManager()
@@ -171,12 +183,17 @@ export class GameScene extends Phaser.Scene {
     this.comboManager.reset()
 
     const score = this.scoreManager.getScore()
-    const isNewHighScore = score > this.highScoreAtStart
+    const isNewHighScore = this.mode === 'endless' && score > this.highScoreAtStart
+    const isNewDailyBest = this.mode === 'daily' && score > this.dailyBestAtStart
+
     if (isNewHighScore) {
       // Kept in the registry (shared across the whole Game instance) rather than
       // only on this scene, so a Restart without leaving the Playing screen still
       // compares the next run against the score that was just set, not a stale value.
       this.registry.set('highScore', score)
+    }
+    if (isNewDailyBest) {
+      this.registry.set('dailyBest', score)
     }
 
     EventBus.emit('player-collided')
@@ -184,7 +201,9 @@ export class GameScene extends Phaser.Scene {
       score,
       distance: this.scoreManager.getDistanceMeters(),
       coins: this.scoreManager.getCoins(),
+      mode: this.mode,
       isNewHighScore,
+      isNewDailyBest,
     })
   }
 }

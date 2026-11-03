@@ -1,8 +1,19 @@
+import type { GhostEvent } from '@/game/types/replay'
+
+export type GameMode = 'endless' | 'daily'
+
 export interface GameOverPayload {
   score: number
   distance: number
   coins: number
+  mode: GameMode
+  /** Only meaningful for endless runs; always false for a daily challenge attempt. */
   isNewHighScore: boolean
+  /** Only meaningful for daily challenge runs; always false for an endless run. */
+  isNewDailyBest: boolean
+  /** The action log of this run, present only when it just became the new endless
+   * best - that's the one run future sessions will replay as a ghost. */
+  ghostEvents?: GhostEvent[]
 }
 
 export interface ComboPayload {

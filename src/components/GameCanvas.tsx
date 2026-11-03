@@ -1,20 +1,31 @@
 import { useEffect, useRef } from 'react'
 import type Phaser from 'phaser'
 import { createPhaserGame } from '@/game/PhaserGame'
+import type { GameMode } from '@/game/types/events'
+import type { GhostEvent } from '@/game/types/replay'
 
 interface GameCanvasProps {
   highScore: number
   characterId: string
+  mode: GameMode
+  dailyBest: number
+  ghostEvents: GhostEvent[] | null
 }
 
-export function GameCanvas({ highScore, characterId }: GameCanvasProps) {
+export function GameCanvas({
+  highScore,
+  characterId,
+  mode,
+  dailyBest,
+  ghostEvents,
+}: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef = useRef<Phaser.Game | null>(null)
   // Captures the props as they were at mount time only. A new high score set
   // mid-session is written straight into the Phaser registry by GameScene rather
   // than flowing back through React, so the effect below intentionally never needs
   // to see a later value here.
-  const initDataRef = useRef({ highScore, characterId })
+  const initDataRef = useRef({ highScore, characterId, mode, dailyBest, ghostEvents })
 
   useEffect(() => {
     if (!containerRef.current) return

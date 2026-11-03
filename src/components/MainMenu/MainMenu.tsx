@@ -4,8 +4,10 @@ import type { Screen } from '@/types/screen'
 interface MainMenuProps {
   highScore: number
   totalCoins: number
+  dailyBest: number
   onNavigate: (screen: Screen) => void
   onPlay: () => void
+  onPlayDaily: () => void
 }
 
 const menuItemVariants = {
@@ -17,7 +19,14 @@ const menuItemVariants = {
   }),
 }
 
-export function MainMenu({ highScore, totalCoins, onNavigate, onPlay }: MainMenuProps) {
+export function MainMenu({
+  highScore,
+  totalCoins,
+  dailyBest,
+  onNavigate,
+  onPlay,
+  onPlayDaily,
+}: MainMenuProps) {
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-ink-950 px-6 py-10 text-center">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,rgba(155,48,255,0.25),transparent_60%)]" />
@@ -40,6 +49,7 @@ export function MainMenu({ highScore, totalCoins, onNavigate, onPlay }: MainMenu
       <div className="relative z-10 mt-10 flex w-full max-w-xs flex-col gap-3">
         {[
           { label: 'Play', action: onPlay, primary: true },
+          { label: 'Daily Challenge', action: onPlayDaily },
           { label: 'Characters', action: () => onNavigate('character-select') },
           { label: 'How To Play', action: () => onNavigate('how-to-play') },
           { label: 'Settings', action: () => onNavigate('settings') },
@@ -82,6 +92,16 @@ export function MainMenu({ highScore, totalCoins, onNavigate, onPlay }: MainMenu
             {totalCoins.toLocaleString()}
           </span>
         </div>
+        {dailyBest > 0 && (
+          <div className="flex flex-col items-center">
+            <span className="text-xs tracking-widest text-white/50 uppercase">
+              Today&apos;s Best
+            </span>
+            <span className="font-display text-xl font-bold text-neon-magenta">
+              {dailyBest.toLocaleString()}
+            </span>
+          </div>
+        )}
       </motion.div>
     </div>
   )
