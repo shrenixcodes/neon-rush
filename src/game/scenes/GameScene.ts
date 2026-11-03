@@ -7,11 +7,9 @@ import { ObstacleSpawner } from '@/game/systems/ObstacleSpawner'
 import { CoinSpawner } from '@/game/systems/CoinSpawner'
 import { CollisionSystem } from '@/game/systems/CollisionSystem'
 import { ScoreManager } from '@/game/systems/ScoreManager'
+import { getDifficultyAt } from '@/game/systems/DifficultyManager'
 import { CHARACTERS } from '@/game/data/characters'
-import { BASE_SCROLL_SPEED, GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
-
-const DEFAULT_PATTERN_TIER = 0
-const DEFAULT_OBSTACLE_GAP = 620
+import { GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
 
 export class GameScene extends Phaser.Scene {
   private player!: Player
@@ -22,7 +20,8 @@ export class GameScene extends Phaser.Scene {
   private collisionSystem!: CollisionSystem
   private scoreManager!: ScoreManager
   private road!: Phaser.GameObjects.TileSprite
-  private scrollSpeed = BASE_SCROLL_SPEED
+  private distance = 0
+  private scrollSpeed = 0
   private isGameOver = false
   private highScoreAtStart = 0
 
@@ -32,6 +31,8 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     this.isGameOver = false
+    this.distance = 0
+    this.scrollSpeed = getDifficultyAt(0).scrollSpeed
 
     this.road = this.add.tileSprite(
       GAME_WIDTH / 2,
@@ -67,16 +68,20 @@ export class GameScene extends Phaser.Scene {
     if (this.isGameOver) return
 
     const distanceDelta = (this.scrollSpeed * delta) / 1000
+    this.distance += distanceDelta
     this.scoreManager.addDistance(distanceDelta)
     this.road.tilePositionY -= distanceDelta
     this.player.update(time, delta)
+
+    const difficulty = getDifficultyAt(this.distance)
+    this.scrollSpeed = difficulty.scrollSpeed
 
     this.obstacleSpawner.update(
       delta,
       distanceDelta,
       this.scrollSpeed,
-      DEFAULT_PATTERN_TIER,
-      DEFAULT_OBSTACLE_GAP,
+      difficulty.patternTier,
+      difficulty.obstacleGap,
     )
 
     this.coinSpawner.update(
