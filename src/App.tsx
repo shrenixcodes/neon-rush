@@ -4,7 +4,7 @@ import { MainMenu } from '@/components/MainMenu/MainMenu'
 import { CharacterSelect } from '@/components/CharacterSelect/CharacterSelect'
 import { HowToPlay } from '@/components/HowToPlay/HowToPlay'
 import { Settings } from '@/components/Settings/Settings'
-import { PlayingPlaceholder } from '@/components/PlayingPlaceholder'
+import { GameCanvas } from '@/components/GameCanvas'
 import { CHARACTERS, DEFAULT_CHARACTER_ID } from '@/game/data/characters'
 import { DEFAULT_SETTINGS } from '@/types/settings'
 import type { GameSettings } from '@/types/settings'
@@ -64,7 +64,7 @@ export default function App() {
             onBack={() => setScreen('main-menu')}
           />
         )}
-        {screen === 'playing' && <PlayingPlaceholder onExit={() => setScreen('main-menu')} />}
+        {screen === 'playing' && <GameCanvas onExit={() => setScreen('main-menu')} />}
       </motion.div>
     </>
   )
