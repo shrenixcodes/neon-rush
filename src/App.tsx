@@ -36,6 +36,7 @@ export default function App() {
         totalCoins: prev.totalCoins + payload.coins,
         highScore:
           payload.mode === 'endless' ? Math.max(prev.highScore, payload.score) : prev.highScore,
+        bestGhostRun: payload.ghostEvents ?? prev.bestGhostRun,
         dailyBest:
           payload.mode === 'daily'
             ? {

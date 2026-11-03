@@ -9,11 +9,14 @@ import { CollisionSystem } from '@/game/systems/CollisionSystem'
 import { ScoreManager } from '@/game/systems/ScoreManager'
 import { ComboManager } from '@/game/systems/ComboManager'
 import { NearMissSystem } from '@/game/systems/NearMissSystem'
+import { ReplayRecorder } from '@/game/systems/ReplayRecorder'
+import { GhostRunner } from '@/game/entities/GhostRunner'
 import { getDifficultyAt } from '@/game/systems/DifficultyManager'
 import { createDailyChallengeRng } from '@/game/data/dailyChallenge'
 import { CHARACTERS, DEFAULT_CHARACTER_ID } from '@/game/data/characters'
 import { GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
 import type { GameMode } from '@/game/types/events'
+import type { GhostEvent } from '@/game/types/replay'
 
 export class GameScene extends Phaser.Scene {
   private player!: Player
@@ -25,6 +28,8 @@ export class GameScene extends Phaser.Scene {
   private scoreManager!: ScoreManager
   private comboManager!: ComboManager
   private nearMissSystem!: NearMissSystem
+  private replayRecorder!: ReplayRecorder
+  private ghostRunner: GhostRunner | null = null
   private road!: Phaser.GameObjects.TileSprite
   private distance = 0
   private scrollSpeed = 0
@@ -57,7 +62,16 @@ export class GameScene extends Phaser.Scene {
       (this.registry.get('characterId') as string | undefined) ?? DEFAULT_CHARACTER_ID
     const character = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0]
     this.player = new Player(this, LANE_X[1], character.palette)
-    this.laneController = new LaneController(this, this.player)
+    this.replayRecorder = new ReplayRecorder()
+    this.laneController = new LaneController(this, this.player, (lane) =>
+      this.replayRecorder.recordLaneChange(this.distance, lane),
+    )
+
+    const ghostEvents = this.registry.get('ghostEvents') as GhostEvent[] | null | undefined
+    this.ghostRunner =
+      ghostEvents && ghostEvents.length > 0
+        ? new GhostRunner(this, ghostEvents, character.palette)
+        : null
 
     // A daily challenge run draws its obstacle/coin sequence from a seed derived from
     // today's date, so every player sees the same layout; an endless run stays on
@@ -74,8 +88,12 @@ export class GameScene extends Phaser.Scene {
     this.inputManager = new InputManager(this, {
       onMoveLeft: () => this.laneController.moveLeft(),
       onMoveRight: () => this.laneController.moveRight(),
-      onJump: () => this.player.jump(),
-      onSlide: () => this.player.slide(),
+      onJump: () => {
+        if (this.player.jump()) this.replayRecorder.recordJump(this.distance)
+      },
+      onSlide: () => {
+        if (this.player.slide()) this.replayRecorder.recordSlide(this.distance)
+      },
       onPause: () => this.requestPause(),
     })
 
@@ -90,6 +108,7 @@ export class GameScene extends Phaser.Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.inputManager.destroy()
+      this.ghostRunner?.destroy()
       EventBus.off('pause-requested', onPauseRequested)
       EventBus.off('resume-requested', onResumeRequested)
       EventBus.off('restart-requested', onRestartRequested)
@@ -120,6 +139,7 @@ export class GameScene extends Phaser.Scene {
     // everything physics-driven slows down around it.
     this.road.tilePositionY -= distanceDelta * this.physics.world.timeScale
     this.player.update(time, delta)
+    this.ghostRunner?.update(time, delta, this.distance)
 
     const difficulty = getDifficultyAt(this.distance)
     this.scrollSpeed = difficulty.scrollSpeed
@@ -204,6 +224,7 @@ export class GameScene extends Phaser.Scene {
       mode: this.mode,
       isNewHighScore,
       isNewDailyBest,
+      ghostEvents: isNewHighScore ? this.replayRecorder.getEvents() : undefined,
     })
   }
 }

@@ -16,10 +16,12 @@ export class LaneController {
   private queuedDirection = 0
   private readonly scene: Phaser.Scene
   private readonly player: Player
+  private readonly onLaneChanged?: (lane: number) => void
 
-  constructor(scene: Phaser.Scene, player: Player) {
+  constructor(scene: Phaser.Scene, player: Player, onLaneChanged?: (lane: number) => void) {
     this.scene = scene
     this.player = player
+    this.onLaneChanged = onLaneChanged
     this.player.laneIndex = this.currentLane
   }
 
@@ -49,6 +51,7 @@ export class LaneController {
     this.currentLane = targetLane
     this.player.laneIndex = targetLane
     this.isTweening = true
+    this.onLaneChanged?.(targetLane)
 
     this.scene.tweens.add({
       targets: this.player,
