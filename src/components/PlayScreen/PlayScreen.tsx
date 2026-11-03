@@ -1,6 +1,7 @@
 import { GameCanvas } from '@/components/GameCanvas'
 import { GameHUD } from '@/components/GameHUD/GameHUD'
 import { PauseScreen } from '@/components/PauseScreen/PauseScreen'
+import { GameOverScreen } from '@/components/GameOverScreen/GameOverScreen'
 import { useGameEvents } from '@/hooks/useGameEvents'
 
 interface PlayScreenProps {
@@ -8,8 +9,17 @@ interface PlayScreenProps {
 }
 
 export function PlayScreen({ onExit }: PlayScreenProps) {
-  const { score, distance, coins, combo, isPaused, requestPause, requestResume, requestRestart } =
-    useGameEvents()
+  const {
+    score,
+    distance,
+    coins,
+    combo,
+    isPaused,
+    gameOver,
+    requestPause,
+    requestResume,
+    requestRestart,
+  } = useGameEvents()
 
   return (
     <div className="relative min-h-svh bg-ink-950">
@@ -21,7 +31,7 @@ export function PlayScreen({ onExit }: PlayScreenProps) {
         combo={combo}
         onPause={requestPause}
       />
-      {isPaused && (
+      {isPaused && !gameOver && (
         <PauseScreen
           score={score}
           coins={coins}
@@ -29,6 +39,9 @@ export function PlayScreen({ onExit }: PlayScreenProps) {
           onRestart={requestRestart}
           onMainMenu={onExit}
         />
+      )}
+      {gameOver && (
+        <GameOverScreen result={gameOver} onRestart={requestRestart} onMainMenu={onExit} />
       )}
     </div>
   )
