@@ -4,6 +4,7 @@ import { Player } from '@/game/entities/Player'
 import { LaneController } from '@/game/systems/LaneController'
 import { InputManager } from '@/game/systems/InputManager'
 import { ObstacleSpawner } from '@/game/systems/ObstacleSpawner'
+import { CoinSpawner } from '@/game/systems/CoinSpawner'
 import { CollisionSystem } from '@/game/systems/CollisionSystem'
 import { CHARACTERS } from '@/game/data/characters'
 import { BASE_SCROLL_SPEED, GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
@@ -16,6 +17,7 @@ export class GameScene extends Phaser.Scene {
   private laneController!: LaneController
   private inputManager!: InputManager
   private obstacleSpawner!: ObstacleSpawner
+  private coinSpawner!: CoinSpawner
   private collisionSystem!: CollisionSystem
   private road!: Phaser.GameObjects.TileSprite
   private scrollSpeed = BASE_SCROLL_SPEED
@@ -40,6 +42,7 @@ export class GameScene extends Phaser.Scene {
     this.player = new Player(this, LANE_X[1], character.palette)
     this.laneController = new LaneController(this, this.player)
     this.obstacleSpawner = new ObstacleSpawner(this)
+    this.coinSpawner = new CoinSpawner(this)
     this.collisionSystem = new CollisionSystem(this)
 
     this.inputManager = new InputManager(this, {
@@ -71,12 +74,28 @@ export class GameScene extends Phaser.Scene {
       DEFAULT_OBSTACLE_GAP,
     )
 
+    this.coinSpawner.update(
+      delta,
+      distanceDelta,
+      this.scrollSpeed,
+      this.obstacleSpawner.getActive(),
+    )
+
     const hitObstacle = this.collisionSystem.checkObstacleHit(
       this.player,
       this.obstacleSpawner.getActive(),
     )
     if (hitObstacle) {
       this.handleGameOver()
+      return
+    }
+
+    const collectedCoins = this.collisionSystem.checkCoinPickups(
+      this.player,
+      this.coinSpawner.getActive(),
+    )
+    for (const coin of collectedCoins) {
+      this.coinSpawner.collect(coin)
     }
   }
 
