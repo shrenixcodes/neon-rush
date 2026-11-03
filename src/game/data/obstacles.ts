@@ -129,11 +129,7 @@ export const OBSTACLE_PATTERNS: ObstaclePattern[] = [
   },
   {
     tier: 3,
-    lanes: [
-      { lane: 0, obstacleId: 'hazard' },
-      null,
-      { lane: 2, obstacleId: 'vehicle' },
-    ],
+    lanes: [{ lane: 0, obstacleId: 'hazard' }, null, { lane: 2, obstacleId: 'vehicle' }],
   },
 
   { tier: 3, lanes: [null, { lane: 1, obstacleId: 'drone' }, null] },

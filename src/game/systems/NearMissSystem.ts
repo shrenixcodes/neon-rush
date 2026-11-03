@@ -22,8 +22,7 @@ export class NearMissSystem {
   constructor(scene: Phaser.Scene) {
     this.scene = scene
     this.reducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   }
 
   check(player: Player, obstacles: ReadonlySet<Obstacle>): boolean {

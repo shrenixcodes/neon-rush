@@ -25,7 +25,13 @@ export class ObstacleSpawner {
     this.pool = Array.from({ length: POOL_SIZE }, () => new Obstacle(scene))
   }
 
-  update(delta: number, distanceDeltaPixels: number, scrollSpeed: number, patternTier: number, gap: number): void {
+  update(
+    delta: number,
+    distanceDeltaPixels: number,
+    scrollSpeed: number,
+    patternTier: number,
+    gap: number,
+  ): void {
     this.distanceSinceLastWave += distanceDeltaPixels
     while (this.distanceSinceLastWave >= gap) {
       this.distanceSinceLastWave -= gap

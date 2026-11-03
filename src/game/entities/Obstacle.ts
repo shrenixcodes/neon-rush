@@ -32,7 +32,13 @@ export class Obstacle extends Phaser.Physics.Arcade.Sprite {
     ;(this.body as Phaser.Physics.Arcade.Body).setAllowGravity(false)
   }
 
-  spawn(definition: ObstacleDefinition, lane: number, x: number, y: number, scrollSpeed: number): void {
+  spawn(
+    definition: ObstacleDefinition,
+    lane: number,
+    x: number,
+    y: number,
+    scrollSpeed: number,
+  ): void {
     this.obstacleId = definition.id
     this.requiredAction = definition.requiredAction
     this.laneIndex = lane
