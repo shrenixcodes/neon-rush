@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { audioManager } from '@/game/systems/AudioManager'
 import type { GameOverPayload } from '@/game/types/events'
 
 interface GameOverScreenProps {
@@ -54,14 +55,14 @@ export function GameOverScreen({ result, onRestart, onMainMenu }: GameOverScreen
         Run Over
       </motion.h2>
 
-      {result.isNewHighScore && (
+      {(result.isNewHighScore || result.isNewDailyBest) && (
         <motion.span
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.15, duration: 0.3 }}
           className="font-display rounded-full border border-neon-yellow/60 bg-neon-yellow/10 px-4 py-1 text-xs font-bold tracking-widest text-neon-yellow uppercase"
         >
-          New High Score
+          {result.isNewHighScore ? 'New High Score' : 'New Daily Best'}
         </motion.span>
       )}
 
@@ -84,13 +85,19 @@ export function GameOverScreen({ result, onRestart, onMainMenu }: GameOverScreen
 
       <div className="flex w-56 flex-col gap-3">
         <button
-          onClick={onRestart}
+          onClick={() => {
+            audioManager.playUiClick()
+            onRestart()
+          }}
           className="font-display rounded-md border border-neon-cyan/60 bg-neon-cyan/10 px-6 py-2.5 font-bold tracking-wide text-neon-cyan transition-colors hover:bg-neon-cyan/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-cyan"
         >
           Restart
         </button>
         <button
-          onClick={onMainMenu}
+          onClick={() => {
+            audioManager.playUiClick()
+            onMainMenu()
+          }}
           className="font-display rounded-md border border-ink-700 bg-ink-900/60 px-6 py-2.5 font-semibold tracking-wide text-white/80 transition-colors hover:border-neon-purple/60 hover:bg-ink-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-purple"
         >
           Main Menu

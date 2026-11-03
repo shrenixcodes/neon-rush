@@ -6,6 +6,7 @@ import { HowToPlay } from '@/components/HowToPlay/HowToPlay'
 import { Settings } from '@/components/Settings/Settings'
 import { PlayScreen } from '@/components/PlayScreen/PlayScreen'
 import { EventBus } from '@/game/EventBus'
+import { audioManager } from '@/game/systems/AudioManager'
 import { CHARACTERS } from '@/game/data/characters'
 import { getDailyChallengeKey } from '@/game/data/dailyChallenge'
 import { useSaveData } from '@/hooks/useSaveData'
@@ -24,6 +25,24 @@ export default function App() {
 
   const todayKey = getDailyChallengeKey()
   const dailyBest = saveData.dailyBest[todayKey] ?? 0
+
+  // Browsers block audio until a real user gesture occurs, so the AudioManager's
+  // AudioContext is only created/resumed from inside an actual pointer or key event
+  // handler - never on mount. Settings changes are pushed in on every render rather
+  // than only here, since musicVolume/sfxVolume/muted can change at any time.
+  useEffect(() => {
+    const unlock = () => audioManager.unlock()
+    window.addEventListener('pointerdown', unlock)
+    window.addEventListener('keydown', unlock)
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+  }, [])
+
+  useEffect(() => {
+    audioManager.setVolumes(settings.musicVolume / 100, settings.sfxVolume / 100, settings.muted)
+  }, [settings.musicVolume, settings.sfxVolume, settings.muted])
 
   // Every completed run (win or lose, it always ends in 'game-over') banks its coins
   // into the persistent total, and raises either the endless high score or today's

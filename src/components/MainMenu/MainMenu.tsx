@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { audioManager } from '@/game/systems/AudioManager'
 import type { Screen } from '@/types/screen'
 
 interface MainMenuProps {
@@ -62,7 +63,10 @@ export function MainMenu({
             variants={menuItemVariants}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            onClick={item.action}
+            onClick={() => {
+              audioManager.playUiClick()
+              item.action()
+            }}
             className={
               item.primary
                 ? 'font-display rounded-md border border-neon-cyan/60 bg-neon-cyan/10 px-6 py-3 text-lg font-bold tracking-wider text-neon-cyan shadow-[0_0_20px_rgba(39,243,255,0.35)] transition-colors hover:bg-neon-cyan/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-cyan'

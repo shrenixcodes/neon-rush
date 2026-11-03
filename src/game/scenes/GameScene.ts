@@ -11,6 +11,7 @@ import { ComboManager } from '@/game/systems/ComboManager'
 import { NearMissSystem } from '@/game/systems/NearMissSystem'
 import { ReplayRecorder } from '@/game/systems/ReplayRecorder'
 import { GhostRunner } from '@/game/entities/GhostRunner'
+import { audioManager } from '@/game/systems/AudioManager'
 import { getDifficultyAt } from '@/game/systems/DifficultyManager'
 import { createDailyChallengeRng } from '@/game/data/dailyChallenge'
 import { CHARACTERS, DEFAULT_CHARACTER_ID } from '@/game/data/characters'
@@ -89,10 +90,16 @@ export class GameScene extends Phaser.Scene {
       onMoveLeft: () => this.laneController.moveLeft(),
       onMoveRight: () => this.laneController.moveRight(),
       onJump: () => {
-        if (this.player.jump()) this.replayRecorder.recordJump(this.distance)
+        if (this.player.jump()) {
+          this.replayRecorder.recordJump(this.distance)
+          audioManager.playJump()
+        }
       },
       onSlide: () => {
-        if (this.player.slide()) this.replayRecorder.recordSlide(this.distance)
+        if (this.player.slide()) {
+          this.replayRecorder.recordSlide(this.distance)
+          audioManager.playSlide()
+        }
       },
       onPause: () => this.requestPause(),
     })
@@ -177,6 +184,7 @@ export class GameScene extends Phaser.Scene {
       const combo = this.comboManager.registerPickup()
       this.scoreManager.addCoin(combo.multiplier)
       EventBus.emit('combo-changed', combo)
+      audioManager.playCoin()
     }
     if (collectedCoins.length > 0) {
       EventBus.emit('coins-changed', this.scoreManager.getCoins())
@@ -190,6 +198,7 @@ export class GameScene extends Phaser.Scene {
     if (this.nearMissSystem.check(this.player, this.obstacleSpawner.getActive())) {
       const bonus = this.scoreManager.addNearMissBonus()
       EventBus.emit('near-miss', { bonus })
+      audioManager.playNearMiss()
     }
 
     EventBus.emit('score-changed', this.scoreManager.getScore())
@@ -201,6 +210,12 @@ export class GameScene extends Phaser.Scene {
     this.isGameOver = true
     this.player.state = 'dead'
     this.comboManager.reset()
+    audioManager.playCollision()
+    window.setTimeout(() => audioManager.playGameOver(), 250)
+
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.cameras.main.shake(180, 0.012)
+    }
 
     const score = this.scoreManager.getScore()
     const isNewHighScore = this.mode === 'endless' && score > this.highScoreAtStart

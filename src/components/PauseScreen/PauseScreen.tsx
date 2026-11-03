@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { audioManager } from '@/game/systems/AudioManager'
 
 interface PauseScreenProps {
   score: number
@@ -35,19 +36,28 @@ export function PauseScreen({ score, coins, onResume, onRestart, onMainMenu }: P
 
       <div className="flex w-56 flex-col gap-3">
         <button
-          onClick={onResume}
+          onClick={() => {
+            audioManager.playUiClick()
+            onResume()
+          }}
           className="font-display rounded-md border border-neon-cyan/60 bg-neon-cyan/10 px-6 py-2.5 font-bold tracking-wide text-neon-cyan transition-colors hover:bg-neon-cyan/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-cyan"
         >
           Resume
         </button>
         <button
-          onClick={onRestart}
+          onClick={() => {
+            audioManager.playUiClick()
+            onRestart()
+          }}
           className="font-display rounded-md border border-ink-700 bg-ink-900/60 px-6 py-2.5 font-semibold tracking-wide text-white transition-colors hover:border-neon-purple/60 hover:bg-ink-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-purple"
         >
           Restart
         </button>
         <button
-          onClick={onMainMenu}
+          onClick={() => {
+            audioManager.playUiClick()
+            onMainMenu()
+          }}
           className="font-display rounded-md border border-ink-700 bg-ink-900/60 px-6 py-2.5 font-semibold tracking-wide text-white/80 transition-colors hover:border-neon-purple/60 hover:bg-ink-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neon-purple"
         >
           Main Menu
