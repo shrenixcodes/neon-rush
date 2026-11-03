@@ -2,11 +2,7 @@ import { useEffect, useRef } from 'react'
 import type Phaser from 'phaser'
 import { createPhaserGame } from '@/game/PhaserGame'
 
-interface GameCanvasProps {
-  onExit: () => void
-}
-
-export function GameCanvas({ onExit }: GameCanvasProps) {
+export function GameCanvas() {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef = useRef<Phaser.Game | null>(null)
 
@@ -27,14 +23,8 @@ export function GameCanvas({ onExit }: GameCanvasProps) {
   }, [])
 
   return (
-    <div className="relative flex min-h-svh items-center justify-center bg-ink-950">
+    <div className="flex min-h-svh items-center justify-center bg-ink-950">
       <div ref={containerRef} className="h-svh w-full" />
-      <button
-        onClick={onExit}
-        className="font-display absolute top-4 left-4 z-10 rounded-md border border-neon-purple/50 bg-ink-950/70 px-3 py-1.5 text-xs font-bold tracking-wide text-neon-purple/90 backdrop-blur-sm transition-colors hover:bg-ink-900"
-      >
-        Exit
-      </button>
     </div>
   )
 }
