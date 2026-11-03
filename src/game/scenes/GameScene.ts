@@ -91,29 +91,30 @@ export class GameScene extends Phaser.Scene {
     this.nearMissSystem = new NearMissSystem(this)
 
     this.inputManager = new InputManager(this, {
-      onMoveLeft: () => this.laneController.moveLeft(),
-      onMoveRight: () => this.laneController.moveRight(),
-      onJump: () => {
-        if (this.player.jump()) {
-          this.replayRecorder.recordJump(this.distance)
-          audioManager.playJump()
-        }
-      },
-      onSlide: () => {
-        if (this.player.slide()) {
-          this.replayRecorder.recordSlide(this.distance)
-          audioManager.playSlide()
-        }
-      },
+      onMoveLeft: () => this.handleMoveLeft(),
+      onMoveRight: () => this.handleMoveRight(),
+      onJump: () => this.handleJump(),
+      onSlide: () => this.handleSlide(),
       onPause: () => this.requestPause(),
     })
 
+    // The on-screen touch buttons (TouchControls, rendered by React) call into the
+    // exact same handlers below via these events, rather than duplicating the
+    // recording/audio side effects that go with each action.
     const onPauseRequested = () => this.requestPause()
     const onResumeRequested = () => this.requestResume()
     const onRestartRequested = () => this.scene.restart()
+    const onTouchMoveLeft = () => this.handleMoveLeft()
+    const onTouchMoveRight = () => this.handleMoveRight()
+    const onTouchJump = () => this.handleJump()
+    const onTouchSlide = () => this.handleSlide()
     EventBus.on('pause-requested', onPauseRequested)
     EventBus.on('resume-requested', onResumeRequested)
     EventBus.on('restart-requested', onRestartRequested)
+    EventBus.on('touch-move-left', onTouchMoveLeft)
+    EventBus.on('touch-move-right', onTouchMoveRight)
+    EventBus.on('touch-jump', onTouchJump)
+    EventBus.on('touch-slide', onTouchSlide)
 
     EventBus.emit('game-ready')
 
@@ -123,7 +124,33 @@ export class GameScene extends Phaser.Scene {
       EventBus.off('pause-requested', onPauseRequested)
       EventBus.off('resume-requested', onResumeRequested)
       EventBus.off('restart-requested', onRestartRequested)
+      EventBus.off('touch-move-left', onTouchMoveLeft)
+      EventBus.off('touch-move-right', onTouchMoveRight)
+      EventBus.off('touch-jump', onTouchJump)
+      EventBus.off('touch-slide', onTouchSlide)
     })
+  }
+
+  private handleMoveLeft(): void {
+    this.laneController.moveLeft()
+  }
+
+  private handleMoveRight(): void {
+    this.laneController.moveRight()
+  }
+
+  private handleJump(): void {
+    if (this.player.jump()) {
+      this.replayRecorder.recordJump(this.distance)
+      audioManager.playJump()
+    }
+  }
+
+  private handleSlide(): void {
+    if (this.player.slide()) {
+      this.replayRecorder.recordSlide(this.distance)
+      audioManager.playSlide()
+    }
   }
 
   private requestPause(): void {

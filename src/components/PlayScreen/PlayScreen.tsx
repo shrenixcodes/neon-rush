@@ -2,6 +2,7 @@ import { GameCanvas } from '@/components/GameCanvas'
 import { GameHUD } from '@/components/GameHUD/GameHUD'
 import { PauseScreen } from '@/components/PauseScreen/PauseScreen'
 import { GameOverScreen } from '@/components/GameOverScreen/GameOverScreen'
+import { TouchControls } from '@/components/TouchControls/TouchControls'
 import { useGameEvents } from '@/hooks/useGameEvents'
 import type { GameMode } from '@/game/types/events'
 import type { GhostEvent } from '@/game/types/replay'
@@ -51,6 +52,7 @@ export function PlayScreen({
         combo={combo}
         onPause={requestPause}
       />
+      {!isPaused && !gameOver && <TouchControls />}
       {isPaused && !gameOver && (
         <PauseScreen
           score={score}

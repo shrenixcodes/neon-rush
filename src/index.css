@@ -1,5 +1,10 @@
 @import 'tailwindcss';
 
+/* Matches touch-primary devices (phones/tablets) without matching a mouse with a
+   touchscreen monitor attached, so on-screen controls only show where a swipe/tap
+   is actually the primary input method. */
+@custom-variant touch (@media (pointer: coarse));
+
 @theme {
   --font-display: 'Orbitron', 'Segoe UI', sans-serif;
   --font-body: 'Rajdhani', 'Segoe UI', sans-serif;

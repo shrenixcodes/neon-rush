@@ -44,6 +44,12 @@ export interface GameEventMap {
   'pause-requested': void
   'resume-requested': void
   'restart-requested': void
+  // Fired by the on-screen touch buttons (see TouchControls), so a tap drives the
+  // exact same gameplay methods a keyboard press or swipe does.
+  'touch-move-left': void
+  'touch-move-right': void
+  'touch-jump': void
+  'touch-slide': void
 }
 
 export type GameEventName = keyof GameEventMap
