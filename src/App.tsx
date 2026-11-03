@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, MotionConfig } from 'framer-motion'
 import { MainMenu } from '@/components/MainMenu/MainMenu'
 import { CharacterSelect } from '@/components/CharacterSelect/CharacterSelect'
 import { HowToPlay } from '@/components/HowToPlay/HowToPlay'
@@ -97,7 +97,11 @@ export default function App() {
   }
 
   return (
-    <>
+    // reducedMotion="user" makes every motion.* component in the app respect the
+    // OS-level prefers-reduced-motion setting automatically (dropping transform
+    // animations like the slide/scale entrances, keeping opacity fades) without
+    // each component needing its own check.
+    <MotionConfig reducedMotion="user">
       <motion.div
         key={screen}
         initial={{ opacity: 0 }}
@@ -143,6 +147,6 @@ export default function App() {
           />
         )}
       </motion.div>
-    </>
+    </MotionConfig>
   )
 }
