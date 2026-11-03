@@ -7,6 +7,7 @@ import { ObstacleSpawner } from '@/game/systems/ObstacleSpawner'
 import { CoinSpawner } from '@/game/systems/CoinSpawner'
 import { CollisionSystem } from '@/game/systems/CollisionSystem'
 import { ScoreManager } from '@/game/systems/ScoreManager'
+import { ComboManager } from '@/game/systems/ComboManager'
 import { getDifficultyAt } from '@/game/systems/DifficultyManager'
 import { CHARACTERS } from '@/game/data/characters'
 import { GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
@@ -19,6 +20,7 @@ export class GameScene extends Phaser.Scene {
   private coinSpawner!: CoinSpawner
   private collisionSystem!: CollisionSystem
   private scoreManager!: ScoreManager
+  private comboManager!: ComboManager
   private road!: Phaser.GameObjects.TileSprite
   private distance = 0
   private scrollSpeed = 0
@@ -49,6 +51,7 @@ export class GameScene extends Phaser.Scene {
     this.coinSpawner = new CoinSpawner(this)
     this.collisionSystem = new CollisionSystem(this)
     this.scoreManager = new ScoreManager()
+    this.comboManager = new ComboManager()
 
     this.inputManager = new InputManager(this, {
       onMoveLeft: () => this.laneController.moveLeft(),
@@ -106,10 +109,17 @@ export class GameScene extends Phaser.Scene {
     )
     for (const coin of collectedCoins) {
       this.coinSpawner.collect(coin)
-      this.scoreManager.addCoin(1)
+      const combo = this.comboManager.registerPickup()
+      this.scoreManager.addCoin(combo.multiplier)
+      EventBus.emit('combo-changed', combo)
     }
     if (collectedCoins.length > 0) {
       EventBus.emit('coins-changed', this.scoreManager.getCoins())
+    }
+
+    const comboReset = this.comboManager.update(delta)
+    if (comboReset) {
+      EventBus.emit('combo-changed', comboReset)
     }
 
     EventBus.emit('score-changed', this.scoreManager.getScore())
@@ -120,6 +130,7 @@ export class GameScene extends Phaser.Scene {
     if (this.isGameOver) return
     this.isGameOver = true
     this.player.state = 'dead'
+    this.comboManager.reset()
 
     const score = this.scoreManager.getScore()
     EventBus.emit('player-collided')
