@@ -78,6 +78,13 @@ export class Player extends Phaser.GameObjects.Container {
   update(_time: number, delta: number): void {
     this.runClock += delta
     this.updateRunCycle()
+
+    // Lane-switch tweens (see LaneController) move this container's x directly rather
+    // than through body velocity. Arcade physics otherwise re-derives this container's
+    // transform from the body's own position every step, which would silently
+    // overwrite the tween - pushing the new transform into the body each frame keeps
+    // the two in sync.
+    this.body.updateFromGameObject()
   }
 
   private updateRunCycle(): void {
