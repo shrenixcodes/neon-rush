@@ -64,7 +64,7 @@ export default function App() {
             onBack={() => setScreen('main-menu')}
           />
         )}
-        {screen === 'playing' && <PlayScreen />}
+        {screen === 'playing' && <PlayScreen onExit={() => setScreen('main-menu')} />}
       </motion.div>
     </>
   )

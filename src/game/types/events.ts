@@ -28,6 +28,11 @@ export interface GameEventMap {
   'game-paused': void
   'game-resumed': void
   'game-over': GameOverPayload
+  // Commands flow the other direction: React asks, GameScene decides and then
+  // confirms back with the corresponding 'game-paused' / 'game-resumed' event.
+  'pause-requested': void
+  'resume-requested': void
+  'restart-requested': void
 }
 
 export type GameEventName = keyof GameEventMap

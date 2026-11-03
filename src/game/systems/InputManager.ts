@@ -5,6 +5,7 @@ export interface InputHandlers {
   onMoveRight: () => void
   onJump: () => void
   onSlide: () => void
+  onPause: () => void
 }
 
 const KEY_BINDINGS: Record<keyof InputHandlers, string[]> = {
@@ -12,6 +13,7 @@ const KEY_BINDINGS: Record<keyof InputHandlers, string[]> = {
   onMoveRight: ['RIGHT', 'D'],
   onJump: ['SPACE', 'UP', 'W'],
   onSlide: ['DOWN', 'S'],
+  onPause: ['ESC'],
 }
 
 /**

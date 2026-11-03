@@ -61,13 +61,36 @@ export class GameScene extends Phaser.Scene {
       onMoveRight: () => this.laneController.moveRight(),
       onJump: () => this.player.jump(),
       onSlide: () => this.player.slide(),
+      onPause: () => this.requestPause(),
     })
+
+    const onPauseRequested = () => this.requestPause()
+    const onResumeRequested = () => this.requestResume()
+    const onRestartRequested = () => this.scene.restart()
+    EventBus.on('pause-requested', onPauseRequested)
+    EventBus.on('resume-requested', onResumeRequested)
+    EventBus.on('restart-requested', onRestartRequested)
 
     EventBus.emit('game-ready')
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.inputManager.destroy()
+      EventBus.off('pause-requested', onPauseRequested)
+      EventBus.off('resume-requested', onResumeRequested)
+      EventBus.off('restart-requested', onRestartRequested)
     })
+  }
+
+  private requestPause(): void {
+    if (this.isGameOver || this.scene.isPaused()) return
+    this.scene.pause()
+    EventBus.emit('game-paused')
+  }
+
+  private requestResume(): void {
+    if (!this.scene.isPaused()) return
+    this.scene.resume()
+    EventBus.emit('game-resumed')
   }
 
   update(time: number, delta: number): void {
