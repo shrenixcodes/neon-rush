@@ -6,6 +6,7 @@ import { InputManager } from '@/game/systems/InputManager'
 import { ObstacleSpawner } from '@/game/systems/ObstacleSpawner'
 import { CoinSpawner } from '@/game/systems/CoinSpawner'
 import { CollisionSystem } from '@/game/systems/CollisionSystem'
+import { ScoreManager } from '@/game/systems/ScoreManager'
 import { CHARACTERS } from '@/game/data/characters'
 import { BASE_SCROLL_SPEED, GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
 
@@ -19,9 +20,11 @@ export class GameScene extends Phaser.Scene {
   private obstacleSpawner!: ObstacleSpawner
   private coinSpawner!: CoinSpawner
   private collisionSystem!: CollisionSystem
+  private scoreManager!: ScoreManager
   private road!: Phaser.GameObjects.TileSprite
   private scrollSpeed = BASE_SCROLL_SPEED
   private isGameOver = false
+  private highScoreAtStart = 0
 
   constructor() {
     super('Game')
@@ -44,6 +47,7 @@ export class GameScene extends Phaser.Scene {
     this.obstacleSpawner = new ObstacleSpawner(this)
     this.coinSpawner = new CoinSpawner(this)
     this.collisionSystem = new CollisionSystem(this)
+    this.scoreManager = new ScoreManager()
 
     this.inputManager = new InputManager(this, {
       onMoveLeft: () => this.laneController.moveLeft(),
@@ -63,6 +67,7 @@ export class GameScene extends Phaser.Scene {
     if (this.isGameOver) return
 
     const distanceDelta = (this.scrollSpeed * delta) / 1000
+    this.scoreManager.addDistance(distanceDelta)
     this.road.tilePositionY -= distanceDelta
     this.player.update(time, delta)
 
@@ -96,13 +101,28 @@ export class GameScene extends Phaser.Scene {
     )
     for (const coin of collectedCoins) {
       this.coinSpawner.collect(coin)
+      this.scoreManager.addCoin(1)
     }
+    if (collectedCoins.length > 0) {
+      EventBus.emit('coins-changed', this.scoreManager.getCoins())
+    }
+
+    EventBus.emit('score-changed', this.scoreManager.getScore())
+    EventBus.emit('distance-changed', this.scoreManager.getDistanceMeters())
   }
 
   private handleGameOver(): void {
     if (this.isGameOver) return
     this.isGameOver = true
     this.player.state = 'dead'
+
+    const score = this.scoreManager.getScore()
     EventBus.emit('player-collided')
+    EventBus.emit('game-over', {
+      score,
+      distance: this.scoreManager.getDistanceMeters(),
+      coins: this.scoreManager.getCoins(),
+      isNewHighScore: score > this.highScoreAtStart,
+    })
   }
 }
