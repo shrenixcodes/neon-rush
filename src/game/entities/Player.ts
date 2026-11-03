@@ -7,6 +7,8 @@ import {
   PLAYER_HEIGHT,
   PLAYER_ROW_Y,
   PLAYER_WIDTH,
+  SLIDE_DURATION_MS,
+  SLIDE_HEIGHT_SCALE,
 } from '@/game/config/gameConfig'
 
 export type PlayerState = 'running' | 'jumping' | 'sliding' | 'colliding' | 'dead'
@@ -37,6 +39,7 @@ export class Player extends Phaser.GameObjects.Container {
   private glow: Phaser.GameObjects.Arc
 
   private runClock = 0
+  private slideTimer?: Phaser.Time.TimerEvent
   private baselineY: number
 
   constructor(scene: Phaser.Scene, x: number, palette: CharacterPalette) {
@@ -142,6 +145,43 @@ export class Player extends Phaser.GameObjects.Container {
     this.body.setGravityY(GRAVITY_Y)
     this.body.setVelocityY(JUMP_VELOCITY)
     return true
+  }
+
+  slide(): boolean {
+    if (this.state !== 'running') return false
+    this.state = 'sliding'
+
+    // The hitbox shrinks by adjusting the body's own size/offset directly rather than
+    // scaling this container - scaling the container would also be picked up by
+    // updateFromGameObject() every frame and compound on top of this resize, leaving
+    // the hitbox smaller than intended. The container's own transform (position,
+    // scale) stays untouched; only the child shapes below are re-posed to crouch.
+    this.body.setSize(PLAYER_WIDTH, PLAYER_HEIGHT * SLIDE_HEIGHT_SCALE)
+    this.body.setOffset(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT * SLIDE_HEIGHT_SCALE)
+    this.applySlidePose()
+
+    this.slideTimer?.remove()
+    this.slideTimer = this.scene.time.delayedCall(SLIDE_DURATION_MS, () => this.endSlide())
+    return true
+  }
+
+  private applySlidePose(): void {
+    this.torso.scaleY = 0.45
+    this.torso.y = -10
+    this.head.y = -32
+    this.visor.y = -34
+    this.legLeft.rotation = Phaser.Math.DegToRad(-80)
+    this.legRight.rotation = Phaser.Math.DegToRad(-80)
+    this.armLeft.rotation = Phaser.Math.DegToRad(-60)
+    this.armRight.rotation = Phaser.Math.DegToRad(60)
+  }
+
+  private endSlide(): void {
+    if (this.state !== 'sliding') return
+    this.state = 'running'
+    this.torso.scaleY = 1
+    this.body.setSize(PLAYER_WIDTH, PLAYER_HEIGHT)
+    this.body.setOffset(-PLAYER_WIDTH / 2, -PLAYER_HEIGHT)
   }
 
   isAirborne(): boolean {

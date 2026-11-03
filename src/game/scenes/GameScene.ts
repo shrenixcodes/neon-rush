@@ -18,7 +18,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.road = this.add.tileSprite(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 'road-tile')
+    this.road = this.add.tileSprite(
+      GAME_WIDTH / 2,
+      GAME_HEIGHT / 2,
+      GAME_WIDTH,
+      GAME_HEIGHT,
+      'road-tile',
+    )
 
     const character = CHARACTERS[0]
     this.player = new Player(this, LANE_X[1], character.palette)
@@ -28,6 +34,7 @@ export class GameScene extends Phaser.Scene {
       onMoveLeft: () => this.laneController.moveLeft(),
       onMoveRight: () => this.laneController.moveRight(),
       onJump: () => this.player.jump(),
+      onSlide: () => this.player.slide(),
     })
 
     EventBus.emit('game-ready')
