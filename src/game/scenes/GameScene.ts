@@ -8,6 +8,7 @@ import { CoinSpawner } from '@/game/systems/CoinSpawner'
 import { CollisionSystem } from '@/game/systems/CollisionSystem'
 import { ScoreManager } from '@/game/systems/ScoreManager'
 import { ComboManager } from '@/game/systems/ComboManager'
+import { NearMissSystem } from '@/game/systems/NearMissSystem'
 import { getDifficultyAt } from '@/game/systems/DifficultyManager'
 import { CHARACTERS } from '@/game/data/characters'
 import { GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
@@ -21,6 +22,7 @@ export class GameScene extends Phaser.Scene {
   private collisionSystem!: CollisionSystem
   private scoreManager!: ScoreManager
   private comboManager!: ComboManager
+  private nearMissSystem!: NearMissSystem
   private road!: Phaser.GameObjects.TileSprite
   private distance = 0
   private scrollSpeed = 0
@@ -52,6 +54,7 @@ export class GameScene extends Phaser.Scene {
     this.collisionSystem = new CollisionSystem(this)
     this.scoreManager = new ScoreManager()
     this.comboManager = new ComboManager()
+    this.nearMissSystem = new NearMissSystem(this)
 
     this.inputManager = new InputManager(this, {
       onMoveLeft: () => this.laneController.moveLeft(),
@@ -73,7 +76,11 @@ export class GameScene extends Phaser.Scene {
     const distanceDelta = (this.scrollSpeed * delta) / 1000
     this.distance += distanceDelta
     this.scoreManager.addDistance(distanceDelta)
-    this.road.tilePositionY -= distanceDelta
+    // The road's scroll also reads the physics world's timeScale so it visually
+    // matches the brief slow-motion dip NearMissSystem applies to obstacle/coin
+    // velocities - otherwise the background would keep scrolling at full speed while
+    // everything physics-driven slows down around it.
+    this.road.tilePositionY -= distanceDelta * this.physics.world.timeScale
     this.player.update(time, delta)
 
     const difficulty = getDifficultyAt(this.distance)
@@ -120,6 +127,11 @@ export class GameScene extends Phaser.Scene {
     const comboReset = this.comboManager.update(delta)
     if (comboReset) {
       EventBus.emit('combo-changed', comboReset)
+    }
+
+    if (this.nearMissSystem.check(this.player, this.obstacleSpawner.getActive())) {
+      const bonus = this.scoreManager.addNearMissBonus()
+      EventBus.emit('near-miss', { bonus })
     }
 
     EventBus.emit('score-changed', this.scoreManager.getScore())
