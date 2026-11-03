@@ -143,6 +143,7 @@ export default function App() {
             mode={playMode}
             dailyBest={dailyBest}
             ghostEvents={saveData.bestGhostRun}
+            quality={settings.quality}
             onExit={() => setScreen('main-menu')}
           />
         )}

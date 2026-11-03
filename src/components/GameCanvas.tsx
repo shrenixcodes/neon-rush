@@ -9,6 +9,7 @@ interface GameCanvasProps {
   mode: GameMode
   dailyBest: number
   ghostEvents: GhostEvent[] | null
+  quality: 'high' | 'low'
 }
 
 export function GameCanvas({
@@ -17,6 +18,7 @@ export function GameCanvas({
   mode,
   dailyBest,
   ghostEvents,
+  quality,
 }: GameCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef = useRef<Phaser.Game | null>(null)
@@ -25,7 +27,7 @@ export function GameCanvas({
   // mid-session is written straight into the Phaser registry by GameScene rather
   // than flowing back through React, so the effect below intentionally never needs
   // to see a later value here.
-  const initDataRef = useRef({ highScore, characterId, mode, dailyBest, ghostEvents })
+  const initDataRef = useRef({ highScore, characterId, mode, dailyBest, ghostEvents, quality })
 
   useEffect(() => {
     let cancelled = false

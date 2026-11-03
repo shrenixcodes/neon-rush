@@ -13,6 +13,7 @@ interface PlayScreenProps {
   mode: GameMode
   dailyBest: number
   ghostEvents: GhostEvent[] | null
+  quality: 'high' | 'low'
   onExit: () => void
 }
 
@@ -22,6 +23,7 @@ export function PlayScreen({
   mode,
   dailyBest,
   ghostEvents,
+  quality,
   onExit,
 }: PlayScreenProps) {
   const {
@@ -44,6 +46,7 @@ export function PlayScreen({
         mode={mode}
         dailyBest={dailyBest}
         ghostEvents={ghostEvents}
+        quality={quality}
       />
       <GameHUD
         score={score}

@@ -17,12 +17,13 @@ const SLOW_MOTION_REAL_MS = 170
  */
 export class NearMissSystem {
   private readonly scene: Phaser.Scene
-  private readonly reducedMotion: boolean
+  private readonly skipSlowMotion: boolean
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, lowQuality: boolean) {
     this.scene = scene
-    this.reducedMotion =
+    const reducedMotion =
       typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    this.skipSlowMotion = reducedMotion || lowQuality
   }
 
   check(player: Player, obstacles: ReadonlySet<Obstacle>): boolean {
@@ -46,7 +47,7 @@ export class NearMissSystem {
   }
 
   private triggerSlowMotion(): void {
-    if (this.reducedMotion) return
+    if (this.skipSlowMotion) return
 
     this.scene.time.timeScale = SLOW_MOTION_SCALE
     this.scene.physics.world.timeScale = SLOW_MOTION_SCALE

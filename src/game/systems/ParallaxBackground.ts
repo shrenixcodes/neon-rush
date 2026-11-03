@@ -38,7 +38,7 @@ export class ParallaxBackground {
   private environmentIndex = -1
   private isTransitioning = false
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, lowQuality: boolean) {
     this.scene = scene
 
     this.skyPrimary = scene.add.graphics().setDepth(-20)
@@ -48,6 +48,13 @@ export class ParallaxBackground {
     this.leftNear = this.createStrip(ROAD_MARGIN / 2, -9)
     this.rightFar = this.createStrip(GAME_WIDTH - ROAD_MARGIN / 2, -10)
     this.rightNear = this.createStrip(GAME_WIDTH - ROAD_MARGIN / 2, -9)
+
+    // The far layer is the cheapest thing to drop for "Low" quality - it's the least
+    // noticeable layer (slowest, dimmest) and removing it halves the skyline draw calls.
+    if (lowQuality) {
+      this.leftFar.setVisible(false)
+      this.rightFar.setVisible(false)
+    }
 
     this.applyEnvironment(getEnvironmentIndexAt(0))
   }

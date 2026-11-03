@@ -187,4 +187,10 @@ export class Player extends Phaser.GameObjects.Container {
   isAirborne(): boolean {
     return this.state === 'jumping'
   }
+
+  /** Drops the ambient glow aura under the "Low" quality setting - a cheap but real
+   * saving (one fewer translucent circle redrawn every frame) for low-end devices. */
+  setLowQuality(low: boolean): void {
+    this.glow.setVisible(!low)
+  }
 }

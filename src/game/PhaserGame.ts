@@ -12,6 +12,7 @@ export interface PhaserGameInitData {
   mode: GameMode
   dailyBest: number
   ghostEvents: GhostEvent[] | null
+  quality: 'high' | 'low'
 }
 
 export function createPhaserGame(parent: HTMLElement, initData: PhaserGameInitData): Phaser.Game {
@@ -44,6 +45,7 @@ export function createPhaserGame(parent: HTMLElement, initData: PhaserGameInitDa
   game.registry.set('mode', initData.mode)
   game.registry.set('dailyBest', initData.dailyBest)
   game.registry.set('ghostEvents', initData.ghostEvents)
+  game.registry.set('quality', initData.quality)
 
   return game
 }

@@ -40,6 +40,7 @@ export class GameScene extends Phaser.Scene {
   private highScoreAtStart = 0
   private dailyBestAtStart = 0
   private mode: GameMode = 'endless'
+  private lowQuality = false
 
   constructor() {
     super('Game')
@@ -52,8 +53,9 @@ export class GameScene extends Phaser.Scene {
     this.highScoreAtStart = (this.registry.get('highScore') as number | undefined) ?? 0
     this.dailyBestAtStart = (this.registry.get('dailyBest') as number | undefined) ?? 0
     this.mode = (this.registry.get('mode') as GameMode | undefined) ?? 'endless'
+    this.lowQuality = (this.registry.get('quality') as string | undefined) === 'low'
 
-    this.parallaxBackground = new ParallaxBackground(this)
+    this.parallaxBackground = new ParallaxBackground(this, this.lowQuality)
 
     this.road = this.add.tileSprite(
       GAME_WIDTH / 2,
@@ -67,6 +69,7 @@ export class GameScene extends Phaser.Scene {
       (this.registry.get('characterId') as string | undefined) ?? DEFAULT_CHARACTER_ID
     const character = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0]
     this.player = new Player(this, LANE_X[1], character.palette)
+    this.player.setLowQuality(this.lowQuality)
     this.replayRecorder = new ReplayRecorder()
     this.laneController = new LaneController(this, this.player, (lane) =>
       this.replayRecorder.recordLaneChange(this.distance, lane),
@@ -77,6 +80,7 @@ export class GameScene extends Phaser.Scene {
       ghostEvents && ghostEvents.length > 0
         ? new GhostRunner(this, ghostEvents, character.palette)
         : null
+    this.ghostRunner?.player.setLowQuality(this.lowQuality)
 
     // A daily challenge run draws its obstacle/coin sequence from a seed derived from
     // today's date, so every player sees the same layout; an endless run stays on
@@ -88,7 +92,7 @@ export class GameScene extends Phaser.Scene {
     this.collisionSystem = new CollisionSystem(this)
     this.scoreManager = new ScoreManager()
     this.comboManager = new ComboManager()
-    this.nearMissSystem = new NearMissSystem(this)
+    this.nearMissSystem = new NearMissSystem(this, this.lowQuality)
 
     this.inputManager = new InputManager(this, {
       onMoveLeft: () => this.handleMoveLeft(),
@@ -249,7 +253,7 @@ export class GameScene extends Phaser.Scene {
     audioManager.playCollision()
     window.setTimeout(() => audioManager.playGameOver(), 250)
 
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (!this.lowQuality && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       this.cameras.main.shake(180, 0.012)
     }
 
