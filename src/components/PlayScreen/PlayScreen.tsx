@@ -5,10 +5,12 @@ import { GameOverScreen } from '@/components/GameOverScreen/GameOverScreen'
 import { useGameEvents } from '@/hooks/useGameEvents'
 
 interface PlayScreenProps {
+  highScore: number
+  characterId: string
   onExit: () => void
 }
 
-export function PlayScreen({ onExit }: PlayScreenProps) {
+export function PlayScreen({ highScore, characterId, onExit }: PlayScreenProps) {
   const {
     score,
     distance,
@@ -23,7 +25,7 @@ export function PlayScreen({ onExit }: PlayScreenProps) {
 
   return (
     <div className="relative min-h-svh bg-ink-950">
-      <GameCanvas />
+      <GameCanvas highScore={highScore} characterId={characterId} />
       <GameHUD
         score={score}
         distance={distance}

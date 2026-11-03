@@ -10,7 +10,7 @@ import { ScoreManager } from '@/game/systems/ScoreManager'
 import { ComboManager } from '@/game/systems/ComboManager'
 import { NearMissSystem } from '@/game/systems/NearMissSystem'
 import { getDifficultyAt } from '@/game/systems/DifficultyManager'
-import { CHARACTERS } from '@/game/data/characters'
+import { CHARACTERS, DEFAULT_CHARACTER_ID } from '@/game/data/characters'
 import { GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
 
 export class GameScene extends Phaser.Scene {
@@ -37,6 +37,7 @@ export class GameScene extends Phaser.Scene {
     this.isGameOver = false
     this.distance = 0
     this.scrollSpeed = getDifficultyAt(0).scrollSpeed
+    this.highScoreAtStart = (this.registry.get('highScore') as number | undefined) ?? 0
 
     this.road = this.add.tileSprite(
       GAME_WIDTH / 2,
@@ -46,7 +47,9 @@ export class GameScene extends Phaser.Scene {
       'road-tile',
     )
 
-    const character = CHARACTERS[0]
+    const characterId =
+      (this.registry.get('characterId') as string | undefined) ?? DEFAULT_CHARACTER_ID
+    const character = CHARACTERS.find((c) => c.id === characterId) ?? CHARACTERS[0]
     this.player = new Player(this, LANE_X[1], character.palette)
     this.laneController = new LaneController(this, this.player)
     this.obstacleSpawner = new ObstacleSpawner(this)
@@ -168,12 +171,20 @@ export class GameScene extends Phaser.Scene {
     this.comboManager.reset()
 
     const score = this.scoreManager.getScore()
+    const isNewHighScore = score > this.highScoreAtStart
+    if (isNewHighScore) {
+      // Kept in the registry (shared across the whole Game instance) rather than
+      // only on this scene, so a Restart without leaving the Playing screen still
+      // compares the next run against the score that was just set, not a stale value.
+      this.registry.set('highScore', score)
+    }
+
     EventBus.emit('player-collided')
     EventBus.emit('game-over', {
       score,
       distance: this.scoreManager.getDistanceMeters(),
       coins: this.scoreManager.getCoins(),
-      isNewHighScore: score > this.highScoreAtStart,
+      isNewHighScore,
     })
   }
 }
