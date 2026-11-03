@@ -3,13 +3,19 @@
 export const GAME_WIDTH = 720
 export const GAME_HEIGHT = 1280
 
+// The road doesn't fill the full canvas width - the margins on either side are
+// where ParallaxBackground renders the scrolling city skyline, which is what gives
+// the run a sense of place beyond the three lanes themselves.
+export const ROAD_MARGIN = 50
+export const ROAD_WIDTH = GAME_WIDTH - ROAD_MARGIN * 2
+
 export const LANE_COUNT = 3
+export const LANE_WIDTH = ROAD_WIDTH / LANE_COUNT
 export const LANE_X: readonly [number, number, number] = [
-  GAME_WIDTH / 6,
-  GAME_WIDTH / 2,
-  (GAME_WIDTH / 6) * 5,
+  ROAD_MARGIN + LANE_WIDTH * 0.5,
+  ROAD_MARGIN + LANE_WIDTH * 1.5,
+  ROAD_MARGIN + LANE_WIDTH * 2.5,
 ]
-export const LANE_WIDTH = GAME_WIDTH / LANE_COUNT
 
 export const PLAYER_ROW_Y = GAME_HEIGHT - 260
 export const PLAYER_WIDTH = 72

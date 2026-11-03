@@ -1,7 +1,10 @@
 import Phaser from 'phaser'
-import { GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
+import { LANE_X, ROAD_MARGIN, ROAD_WIDTH } from '@/game/config/gameConfig'
+import { ENVIRONMENTS } from '@/game/data/environments'
+import type { EnvironmentDefinition } from '@/game/data/environments'
 
 const ROAD_TILE_HEIGHT = 256
+const SKYLINE_TILE_HEIGHT = 360
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -12,6 +15,7 @@ export class PreloadScene extends Phaser.Scene {
     this.generateRoadTexture()
     this.generateObstacleTextures()
     this.generateCoinTexture()
+    this.generateSkylineTextures()
     this.scene.start('Game')
   }
 
@@ -20,15 +24,18 @@ export class PreloadScene extends Phaser.Scene {
   // drawn procedurally so the game stays fully self-contained.
   private generateRoadTexture(): void {
     const g = this.add.graphics()
-    const laneBoundary1 = (LANE_X[0] + LANE_X[1]) / 2
-    const laneBoundary2 = (LANE_X[1] + LANE_X[2]) / 2
+    // LANE_X values are positions on the full canvas (they include ROAD_MARGIN, since
+    // that's what the rest of the game places entities at); the texture itself is only
+    // ROAD_WIDTH wide, so boundaries drawn into it need to be re-based to local space.
+    const laneBoundary1 = (LANE_X[0] + LANE_X[1]) / 2 - ROAD_MARGIN
+    const laneBoundary2 = (LANE_X[1] + LANE_X[2]) / 2 - ROAD_MARGIN
 
     g.fillStyle(0x0b0618, 1)
-    g.fillRect(0, 0, GAME_WIDTH, ROAD_TILE_HEIGHT)
+    g.fillRect(0, 0, ROAD_WIDTH, ROAD_TILE_HEIGHT)
 
     g.fillStyle(0x140b26, 1)
-    g.fillRect(0, 0, GAME_WIDTH, 24)
-    g.fillRect(0, ROAD_TILE_HEIGHT - 24, GAME_WIDTH, 24)
+    g.fillRect(0, 0, ROAD_WIDTH, 24)
+    g.fillRect(0, ROAD_TILE_HEIGHT - 24, ROAD_WIDTH, 24)
 
     g.lineStyle(4, 0x27f3ff, 0.55)
     for (const x of [laneBoundary1, laneBoundary2]) {
@@ -41,9 +48,9 @@ export class PreloadScene extends Phaser.Scene {
     }
 
     g.lineStyle(3, 0xff2bd6, 0.3)
-    g.strokeRect(6, 6, GAME_WIDTH - 12, ROAD_TILE_HEIGHT - 12)
+    g.strokeRect(6, 6, ROAD_WIDTH - 12, ROAD_TILE_HEIGHT - 12)
 
-    g.generateTexture('road-tile', GAME_WIDTH, ROAD_TILE_HEIGHT)
+    g.generateTexture('road-tile', ROAD_WIDTH, ROAD_TILE_HEIGHT)
     g.destroy()
   }
 
@@ -167,6 +174,54 @@ export class PreloadScene extends Phaser.Scene {
     g.fillStyle(0x27f3ff, 0.6)
     g.fillRect(4, cy - 4, size - 8, 8)
     g.generateTexture('obstacle-drone', size, size)
+    g.destroy()
+  }
+
+  // Each environment gets a far and a near skyline texture. The margins flanking the
+  // road are narrow (ROAD_MARGIN px), so literal building silhouettes would be
+  // unreadable at that width - instead each strip reads as a column of neon
+  // window-light and signage, which is both plausible at city scale and legible at
+  // this size. The far layer is dimmer and sparser; the near layer is brighter and
+  // denser, and ParallaxBackground scrolls them at different speeds for depth.
+  private generateSkylineTextures(): void {
+    for (const env of ENVIRONMENTS) {
+      this.drawSkylineLayer(env, 'far', 0.35, 6)
+      this.drawSkylineLayer(env, 'near', 0.8, 10)
+    }
+  }
+
+  private drawSkylineLayer(
+    env: EnvironmentDefinition,
+    layer: 'far' | 'near',
+    brightness: number,
+    windowCount: number,
+  ): void {
+    const g = this.add.graphics()
+    const w = ROAD_MARGIN
+    const h = SKYLINE_TILE_HEIGHT
+    const wallColor = layer === 'far' ? env.buildingFar : env.buildingNear
+
+    g.fillStyle(wallColor, 1)
+    g.fillRect(0, 0, w, h)
+
+    for (let i = 0; i < windowCount; i++) {
+      const x = 4 + Math.random() * (w - 8)
+      const barHeight = 14 + Math.random() * 46
+      const y = Math.random() * (h - barHeight)
+      const useAccent = Math.random() < 0.2
+      g.fillStyle(useAccent ? env.accentColor : env.windowColor, brightness)
+      g.fillRect(x, y, 3, barHeight)
+    }
+
+    g.lineStyle(2, env.accentColor, brightness * 0.5)
+    for (const y of [h * 0.25, h * 0.55, h * 0.85]) {
+      g.beginPath()
+      g.moveTo(0, y)
+      g.lineTo(w, y)
+      g.strokePath()
+    }
+
+    g.generateTexture(`skyline-${env.id}-${layer}`, w, h)
     g.destroy()
   }
 

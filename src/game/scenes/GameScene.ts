@@ -12,10 +12,11 @@ import { NearMissSystem } from '@/game/systems/NearMissSystem'
 import { ReplayRecorder } from '@/game/systems/ReplayRecorder'
 import { GhostRunner } from '@/game/entities/GhostRunner'
 import { audioManager } from '@/game/systems/AudioManager'
+import { ParallaxBackground } from '@/game/systems/ParallaxBackground'
 import { getDifficultyAt } from '@/game/systems/DifficultyManager'
 import { createDailyChallengeRng } from '@/game/data/dailyChallenge'
 import { CHARACTERS, DEFAULT_CHARACTER_ID } from '@/game/data/characters'
-import { GAME_HEIGHT, GAME_WIDTH, LANE_X } from '@/game/config/gameConfig'
+import { GAME_HEIGHT, GAME_WIDTH, LANE_X, ROAD_WIDTH } from '@/game/config/gameConfig'
 import type { GameMode } from '@/game/types/events'
 import type { GhostEvent } from '@/game/types/replay'
 
@@ -31,6 +32,7 @@ export class GameScene extends Phaser.Scene {
   private nearMissSystem!: NearMissSystem
   private replayRecorder!: ReplayRecorder
   private ghostRunner: GhostRunner | null = null
+  private parallaxBackground!: ParallaxBackground
   private road!: Phaser.GameObjects.TileSprite
   private distance = 0
   private scrollSpeed = 0
@@ -51,10 +53,12 @@ export class GameScene extends Phaser.Scene {
     this.dailyBestAtStart = (this.registry.get('dailyBest') as number | undefined) ?? 0
     this.mode = (this.registry.get('mode') as GameMode | undefined) ?? 'endless'
 
+    this.parallaxBackground = new ParallaxBackground(this)
+
     this.road = this.add.tileSprite(
       GAME_WIDTH / 2,
       GAME_HEIGHT / 2,
-      GAME_WIDTH,
+      ROAD_WIDTH,
       GAME_HEIGHT,
       'road-tile',
     )
@@ -145,6 +149,11 @@ export class GameScene extends Phaser.Scene {
     // velocities - otherwise the background would keep scrolling at full speed while
     // everything physics-driven slows down around it.
     this.road.tilePositionY -= distanceDelta * this.physics.world.timeScale
+    this.parallaxBackground.update(
+      delta * this.physics.world.timeScale,
+      this.scrollSpeed,
+      this.distance,
+    )
     this.player.update(time, delta)
     this.ghostRunner?.update(time, delta, this.distance)
 
